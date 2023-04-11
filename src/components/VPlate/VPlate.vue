@@ -1,9 +1,9 @@
 <template>
 <div class="plate">
-  <div class="plate-logged" v-if="props.isLogged">
+  <div class="plate-logged" v-if="isLogged">
 
     <RouterLink to="/profile">
-      <span>{{props.name}}</span>
+      <span>{{name}}</span>
     </RouterLink>
     <img src="../../assets/icons/logout.svg" alt="logout" @click.stop="logoutClickHandler">
   </div>
@@ -13,22 +13,28 @@
 
 <script lang="ts" setup>
 
+import {computed} from "vue";
+import { useUserStore } from "@/stores/user";
+
+const userStore = useUserStore()
+
 const emit = defineEmits(["openLogin"])
 
-const props = defineProps({
-  isLogged: {
-    type: [Boolean],
-    default: true
-  },
-  name: {
-    type: [String, Number],
-    default: "DefaultUser",
-    optional: true
+const isLogged = computed(() => {
+  if (userStore.token !== undefined){
+    return true
   }
+  return false
+})
+const name = computed(() => {
+  if (userStore.username !== undefined){
+    return userStore.username
+  }
+  return "Default User";
 })
 
 function logoutClickHandler(){
-  console.log('logout click')
+  userStore.logout();
 }
 
 function loginClickHandler(haveAccount: boolean): void{

@@ -7,6 +7,7 @@
         v-model="store.inputLogin"
         class="subtitle-small"
         placeholder="Логін"
+        v-if="!store.haveAccount"
         :style="{border: store.errorLogin ? '1px solid red' : ''}"
     >
     <input
@@ -14,7 +15,6 @@
         v-model="store.inputEmail"
         class="subtitle-small"
         placeholder="Пошта"
-        v-if="!store.haveAccount"
         :style="{border: store.errorEmail ? '1px solid red' : ''}"
     >
     <input
@@ -42,11 +42,14 @@
     </button>
   </div>
 </div>
+
 </template>
 
 <script lang="ts" setup>
+import { onMounted, reactive, computed } from "vue";
+import { useUserStore } from "@/stores/user";
 
-import {onMounted, reactive} from "vue";
+const userStore = useUserStore()
 
 const emit = defineEmits(['update:active'])
 
@@ -80,7 +83,7 @@ function disableErrors(){
   store.errorPassword = store.errorLogin = store.errorEmail = false
 }
 
-function submitEvent(){
+async function submitEvent(){
   if (store.inputLogin.length < 3){
     store.errorLogin = true
   }
@@ -92,15 +95,61 @@ function submitEvent(){
     return
   }
   if (store.haveAccount){
-    console.log(`${store.inputLogin}, ${store.inputPassword} `)
+    console.log(`${store.inputEmail}, ${store.inputPassword} `)
+    const requestBody = {
+      email: store.inputEmail,
+      password: store.inputPassword
+    }
+    try {
+      const response = await fetch(`${apiUrl.value}/user/login`, {
+        method: "POST",
+        body: JSON.stringify(requestBody),
+        headers: {
+          'Content-Type': 'application/json'
+        },
+      })
+      const token = await response.json();
+
+      userStore.setToken(token.token);
+      userStore.setUsername(token.user.login);
+      closeClickHandler();
+    }catch (e){
+      alert('Something went wrong');
+    }
+
   } else {
     console.log(`${store.inputLogin}, ${store.inputEmail}, ${store.inputPassword}, ${store.inputPasswordRepeat} `)
+    const requestBody = {
+      login: store.inputLogin,
+      email: store.inputEmail,
+      password: store.inputPassword
+    }
+    try {
+      const response = await fetch(`http://localhost:5000/user/register`, {
+        method: "POST",
+        body: JSON.stringify(requestBody),
+        headers: {
+          'Content-Type': 'application/json'
+        },
+      })
+      const token = await response.json()
+
+      userStore.setToken(token.token);
+      userStore.setUsername(token.user.login);
+      closeClickHandler();
+    }
+    catch (e){
+      alert('Something went wrong')
+    }
   }
 }
 
 function closeClickHandler():void{
   emit('update:active', !props.active)
 }
+
+const apiUrl = computed<string>(() => import.meta.env.VITE_APP_API_URL)
+
 </script>
 
 <style scoped lang="scss">

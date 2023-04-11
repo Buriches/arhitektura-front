@@ -1,6 +1,6 @@
 <template>
 <div class="profile" @click="disableErrors()">
-  <h2 class="title-medium profile-title">Доброго дня, <span>{{props.name}}</span>!</h2>
+  <h2 class="title-medium profile-title">Доброго дня, <span>{{name}}</span>!</h2>
   <p class="text-small-soft profile-label">Для зміни логіна заповни нижче поле</p>
   <form class="profile-login" @submit.prevent="changeLogin()">
     <input
@@ -47,13 +47,15 @@
 </template>
 
 <script setup lang="ts">
-import {reactive} from "vue";
+import {computed, reactive} from "vue";
+import { useUserStore } from "@/stores/user";
+const userStore = useUserStore()
 
-const props = defineProps({
-  name: {
-    type: String,
-    default: "defaultName"
+const name = computed(() => {
+  if (userStore.username !== undefined){
+    return userStore.username;
   }
+  return "DefaultName"
 })
 const store = reactive({
   inputNewLogin: '',
